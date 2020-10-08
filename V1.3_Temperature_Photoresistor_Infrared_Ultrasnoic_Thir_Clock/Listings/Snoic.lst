@@ -1,0 +1,93 @@
+C51 COMPILER V9.60.0.0   SNOIC                                                             10/08/2020 11:30:03 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SNOIC
+OBJECT MODULE PLACED IN .\Objects\Snoic.obj
+COMPILER INVOKED BY: E:\Keil\Software\C51\BIN\C51.EXE Hardware\Snoic.c COMPACT OPTIMIZE(9,SPEED) BROWSE INCDIR(.\Basic;.
+                    -\Hardware;.\User) DEBUG OBJECTEXTEND PRINT(.\Listings\Snoic.lst) TABS(2) OBJECT(.\Objects\Snoic.obj)
+
+line level    source
+
+   1          #include "Sys.h"
+   2          
+   3          
+   4          void Delay13us()    //@11.0592MHz
+   5          {
+   6   1        unsigned char i;
+   7   1      
+   8   1        _nop_();
+   9   1        _nop_();
+  10   1        i = 33;
+  11   1        while (--i);
+  12   1      }
+  13          
+  14          void InitSonic()//初始化定时器1，暂时不启动
+  15          {
+  16   1        TMOD = (TMOD & 0x0F) | 0x10;
+  17   1        
+  18   1        TF1 = 0;
+  19   1        TR1 = 0;
+  20   1      }
+  21          
+  22          void SendWave()//发送八段脉冲波(40Khz)
+  23          {
+  24   1        u8 i = 8;
+  25   1        
+  26   1        while(i --)
+  27   1        {
+  28   2          Snoic_Txd = 1;
+  29   2          Delay13us();
+  30   2          Snoic_Txd = 0;
+  31   2          Delay13us();
+  32   2        }
+  33   1      }
+  34          
+  35          void Dis_Get()
+  36          {
+  37   1        u16 time, distance;
+  38   1        
+  39   1        EA = 0;
+  40   1        SendWave();
+  41   1        EA = 1;
+  42   1        TH1 = 0;
+  43   1        TL1 = 0;
+  44   1        TR1 = 1;
+  45   1        while((Snoic_Rxd) && (TF1 == 0));
+  46   1        TR1 = 0;
+  47   1        
+  48   1        if(TF1 == 1)
+  49   1        {
+  50   2          TF1 = 0;
+  51   2          SMG_Buff[4] = 0xBF;
+  52   2          SMG_Buff[5] = 0xBF;
+  53   2          SMG_Buff[6] = 0xBF;
+  54   2          SMG_Buff[7] = 0xBF;
+C51 COMPILER V9.60.0.0   SNOIC                                                             10/08/2020 11:30:03 PAGE 2   
+
+  55   2        } 
+  56   1        else
+  57   1        {
+  58   2          time = (TH1 * 256) + TL1;
+  59   2          distance = (u16)((time * 0.17 * 12) / 11.0592);//本身数值乘以0.17公式是官方给的对于12MHZ的晶振的由于实际
+             -使用的是11.05926MHZ所以这么算
+  60   2          SMG_Buff[4] = SMG[(distance / 1000) % 10];
+  61   2          SMG_Buff[5] = SMG[(distance / 100) % 10];
+  62   2          SMG_Buff[6] = (SMG[(distance / 10) % 10]) & 0x7F;
+  63   2          SMG_Buff[7] = SMG[(distance % 10)];
+  64   2        }
+  65   1      }
+  66          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    198    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

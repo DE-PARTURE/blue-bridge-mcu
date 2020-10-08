@@ -1,0 +1,271 @@
+C51 COMPILER V9.60.0.0   SYS                                                               10/08/2020 11:30:03 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SYS
+OBJECT MODULE PLACED IN .\Objects\Sys.obj
+COMPILER INVOKED BY: E:\Keil\Software\C51\BIN\C51.EXE Basic\Sys.c COMPACT OPTIMIZE(9,SPEED) BROWSE INCDIR(.\Basic;.\Hard
+                    -ware;.\User) DEBUG OBJECTEXTEND PRINT(.\Listings\Sys.lst) TABS(2) OBJECT(.\Objects\Sys.obj)
+
+line level    source
+
+   1          #include "Sys.h"
+   2          
+   3          u16 count = 0;          //200ms辅助计数
+   4          bit flag200ms = 0;      //200ms标志位
+   5          bit SysBusy = 0;        //系统忙标志位
+   6          /*********************************Setup*************************************/
+   7          
+   8          /**************************************************************************
+   9          函数功能：任务状态标志位初始化函数
+  10          入口参数：无
+  11          返回值  ：无
+  12          **************************************************************************/
+  13          void TaskStruInit(){
+  14   1        _18B20.StartFlag = 0;
+  15   1        _18B20.ExcuteFlag = 0;
+  16   1        _18B20.EndFlag = 0;
+  17   1        
+  18   1        _Dis.StartFlag = 0;
+  19   1        _Dis.ExcuteFlag = 0;
+  20   1        _Dis.EndFlag = 0;
+  21   1        
+  22   1        _AD.StartFlag = 0;
+  23   1        _AD.ExcuteFlag = 0;
+  24   1        _AD.EndFlag = 0;
+  25   1        
+  26   1        _Ir.StartFlag = 0;
+  27   1        _Ir.ExcuteFlag = 0;
+  28   1        _Ir.EndFlag = 0;
+  29   1        
+  30   1        _Clock.StartFlag = 0;
+  31   1        _Clock.ExcuteFlag = 0;
+  32   1        _Clock.EndFlag = 0;
+  33   1      }
+  34          /**************************************************************************
+  35          函数功能：本地时间结构体初始化函数
+  36          入口参数：无
+  37          返回值  ：无
+  38          **************************************************************************/
+  39          void TimeStruInit(){
+  40   1        LocalTime.Year  = 19;
+  41   1        LocalTime.Month = 12;
+  42   1        LocalTime.Day   = 12;
+  43   1        LocalTime.Week  = 4 ;
+  44   1        LocalTime.Hour  = 10;
+  45   1        LocalTime.Minu  = 00;
+  46   1        LocalTime.Sec   = 00;
+  47   1      }
+  48          /**************************************************************************
+  49          函数功能：关闭继电器和蜂鸣器无关外设
+  50          入口参数：无
+  51          返回值  ：无
+  52          **************************************************************************/
+  53          void InitSystem()
+  54          {
+C51 COMPILER V9.60.0.0   SYS                                                               10/08/2020 11:30:03 PAGE 2   
+
+  55   1        P2 = (P2 & 0x1F) | 0x80;
+  56   1        P0 = 0xFF;
+  57   1        P2 &= 0x1F;
+  58   1        P2 = (P2 & 0x1F) | 0xA0;
+  59   1        P0 = 0x00;
+  60   1        P2 &= 0x1F;
+  61   1      }
+  62          /**************************************************************************
+  63          函数功能：初始化定时器0（5ms）
+  64          入口参数：无
+  65          返回值  ：无
+  66          **************************************************************************/
+  67          void InitTimer0()
+  68          {
+  69   1        AUXR |= 0x80;   
+  70   1        TMOD= (TMOD & 0xF0) | 0x01;
+  71   1        TL0 = (65535 - 5000) % 256;   
+  72   1        TH0 = (65535 - 5000) / 256;     
+  73   1        TF0 = 0;    
+  74   1        TR0 = 1;
+  75   1        EA = 1;
+  76   1        ET0 = 1;
+  77   1      }
+  78          /**************************************************************************
+  79          函数功能：定时器0中断服务函数
+  80          入口参数：无
+  81          返回值  ：无
+  82          **************************************************************************/
+  83          void ServiceTimer0() interrupt 1
+  84          {
+  85   1        TL0 = (65535 - 5000) % 256;   
+  86   1        TH0 = (65535 - 5000) / 256;
+  87   1        
+  88   1        count ++;
+  89   1        SMG_Display();
+  90   1        
+  91   1        if(count == 40)
+  92   1        {
+  93   2          count = 0;
+  94   2          flag200ms = 1;
+  95   2        }
+  96   1      }
+  97          /*********************************Loop*************************************/
+  98          
+  99          /**************************************************************************
+ 100          函数功能：任务开始时要进行的初始化
+ 101          入口参数：无
+ 102          返回值  ：无
+ 103          **************************************************************************/
+ 104          void StartFlagScan(){
+ 105   1        if(!SysBusy){
+ 106   2          //当前无任务在执行
+ 107   2          if(_18B20.StartFlag){
+ 108   3            _18B20.StartFlag = 0;
+ 109   3            _18B20.ExcuteFlag = 1;
+ 110   3            LEDSingleRun(1);
+ 111   3            SysBusy = 1;
+ 112   3          }else if(_Dis.StartFlag){
+ 113   3            _Dis.StartFlag = 0;
+ 114   3            _Dis.ExcuteFlag = 1;
+ 115   3            LEDSingleRun(2);
+ 116   3            SysBusy = 1;
+C51 COMPILER V9.60.0.0   SYS                                                               10/08/2020 11:30:03 PAGE 3   
+
+ 117   3          }else if(_AD.StartFlag){
+ 118   3            _AD.StartFlag = 0;
+ 119   3            _AD.ExcuteFlag = 1;
+ 120   3            LEDSingleRun(3);
+ 121   3            SysBusy = 1;
+ 122   3          }else if(_Ir.StartFlag){
+ 123   3            _Ir.StartFlag = 0;
+ 124   3            _Ir.ExcuteFlag = 1;
+ 125   3            LEDSingleRun(4);
+ 126   3            EX1 = 1;              //使能外部中断
+ 127   3            SysBusy = 1;
+ 128   3          }else if(_Clock.StartFlag){
+ 129   3            _Clock.StartFlag = 0;
+ 130   3            _Clock.ExcuteFlag = 1;
+ 131   3            LEDSingleRun(5);
+ 132   3            SysBusy = 1;
+ 133   3          }
+ 134   2        }
+ 135   1      }
+ 136          /**************************************************************************
+ 137          函数功能：任务执行
+ 138          入口参数：无
+ 139          返回值  ：无
+ 140          **************************************************************************/
+ 141          void ExcuteFlagScan(){
+ 142   1        static u8 count_Dis   = 0;
+ 143   1        static u8 count_AD    = 0;
+ 144   1        static u8 count_Clock = 0;
+ 145   1        
+ 146   1        if(_18B20.ExcuteFlag){
+ 147   2          Temp_Get();
+ 148   2        }else if(_Dis.ExcuteFlag){
+ 149   2          if(flag200ms)
+ 150   2          {
+ 151   3            count_Dis ++;
+ 152   3            flag200ms = 0;
+ 153   3            if(count_Dis == 4)    //计数4次刷新超声波数据
+ 154   3            {
+ 155   4              Dis_Get();
+ 156   4              KeyDrive();         //超声波占用时间过长，防止按键不灵敏
+ 157   4              KeyScan();
+ 158   4              flag200ms = 0;
+ 159   4              count_Dis = 0;
+ 160   4            }
+ 161   3          }
+ 162   2        }else if(_AD.ExcuteFlag){
+ 163   2          if(flag200ms)
+ 164   2          {
+ 165   3            count_AD ++;
+ 166   3            flag200ms = 0;
+ 167   3            if(count_AD == 10)//计数10次刷新AD数据
+ 168   3            {
+ 169   4              AD_Get();
+ 170   4              count_AD = 0;
+ 171   4              flag200ms = 0;
+ 172   4            }               
+ 173   3          }
+ 174   2        }else if(_Ir.ExcuteFlag){
+ 175   2          IrInfoDisplay();
+ 176   2        }else if(_Clock.ExcuteFlag){
+ 177   2          if(flag200ms)
+ 178   2          {
+C51 COMPILER V9.60.0.0   SYS                                                               10/08/2020 11:30:03 PAGE 4   
+
+ 179   3            count_Clock ++;
+ 180   3            flag200ms = 0;
+ 181   3            if(count_Clock == 5)//计数5次刷新Clock数据
+ 182   3            {
+ 183   4              TimeDisplay();
+ 184   4              count_Clock = 0;
+ 185   4              flag200ms = 0;
+ 186   4            }               
+ 187   3          }
+ 188   2        }
+ 189   1      }
+ 190          /**************************************************************************
+ 191          函数功能：任务结束时要进行的设置
+ 192          入口参数：无
+ 193          返回值  ：无
+ 194          **************************************************************************/
+ 195          void EndFlagScan(){
+ 196   1        
+ 197   1        if(_18B20.EndFlag){
+ 198   2          _18B20.EndFlag = 0;
+ 199   2          _18B20.ExcuteFlag = 0;
+ 200   2          Refresh();
+ 201   2          LEDSingleRun(0);
+ 202   2          SysBusy = 0;
+ 203   2        }else if(_Dis.EndFlag){
+ 204   2          _Dis.EndFlag = 0;
+ 205   2          _Dis.ExcuteFlag = 0;
+ 206   2          Refresh();
+ 207   2          LEDSingleRun(0);
+ 208   2          TR1 = 0;
+ 209   2          SysBusy = 0;
+ 210   2        }else if(_AD.EndFlag){
+ 211   2          _AD.EndFlag = 0;
+ 212   2          _AD.ExcuteFlag = 0;
+ 213   2          Refresh();
+ 214   2          LEDSingleRun(0);
+ 215   2          SysBusy = 0;
+ 216   2        }else if(_Ir.EndFlag){
+ 217   2          _Ir.EndFlag = 0;
+ 218   2          _Ir.ExcuteFlag = 0;
+ 219   2          Refresh();
+ 220   2          LEDSingleRun(0);
+ 221   2          EX1 = 0;            //失能外部中断
+ 222   2          SysBusy = 0;
+ 223   2        }else if(_Clock.EndFlag){
+ 224   2          _Clock.EndFlag = 0;
+ 225   2          _Clock.ExcuteFlag = 0;
+ 226   2          Refresh();
+ 227   2          LEDSingleRun(0);
+ 228   2          SysBusy = 0;
+ 229   2        }
+ 230   1      }
+ 231          
+ 232          /*
+ 233            interrupt 0   INT0
+ 234            interrupt 1   Timer0
+ 235            interrupt 2   INT1
+ 236            interrupt 3   Timer1
+ 237            interrupt 4   UART
+ 238            interrupt 12  Timer2  
+ 239          */
+
+C51 COMPILER V9.60.0.0   SYS                                                               10/08/2020 11:30:03 PAGE 5   
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    474    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =      5    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

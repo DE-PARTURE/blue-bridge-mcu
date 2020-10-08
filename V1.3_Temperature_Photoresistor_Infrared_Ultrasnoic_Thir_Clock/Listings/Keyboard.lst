@@ -1,0 +1,169 @@
+C51 COMPILER V9.60.0.0   KEYBOARD                                                          10/08/2020 11:30:02 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE KEYBOARD
+OBJECT MODULE PLACED IN .\Objects\Keyboard.obj
+COMPILER INVOKED BY: E:\Keil\Software\C51\BIN\C51.EXE Hardware\Keyboard.c COMPACT OPTIMIZE(9,SPEED) BROWSE INCDIR(.\Basi
+                    -c;.\Hardware;.\User) DEBUG OBJECTEXTEND PRINT(.\Listings\Keyboard.lst) TABS(2) OBJECT(.\Objects\Keyboard.obj)
+
+line level    source
+
+   1          #include "Sys.h"
+   2          
+   3          u8 Key_Sta[4][4] = {
+   4          {1 , 1 , 1 , 1},{1 , 1 , 1 , 1},
+   5          {1 , 1 , 1 , 1},{1 , 1 , 1 , 1}
+   6          };//按键当前状态
+   7          
+   8          u8 Key_CodeMap[4][4] = {
+   9            {'A', 'B', 'C', 'D'},
+  10            {'E', 'F', 'G', 'H'},
+  11            {'I', 'J', 'K', 'L'},
+  12            {'M', 'N', 'O', 'P'}
+  13          
+  14          };//键码表
+  15          /**************************************************************************
+  16          函数功能：键盘功能函数
+  17          入口参数：键码
+  18          返回值  ：无
+  19          **************************************************************************/
+  20          void KeyAction(char cmd)      //按键功能函数
+  21          {
+  22   1        if(cmd == 'A')
+  23   1        {
+  24   2          if(!_18B20.ExcuteFlag & !SysBusy){
+  25   3            _18B20.StartFlag = 1;
+  26   3          }
+  27   2          else if(_18B20.ExcuteFlag){
+  28   3            _18B20.EndFlag = 1;
+  29   3          }
+  30   2        }
+  31   1        else if(cmd == 'B')
+  32   1        {
+  33   2          if(!_Dis.ExcuteFlag & !SysBusy){
+  34   3            _Dis.StartFlag = 1;
+  35   3          }
+  36   2          else if(_Dis.ExcuteFlag){
+  37   3            _Dis.EndFlag = 1;
+  38   3          }
+  39   2        }
+  40   1        else if(cmd == 'C')
+  41   1        {
+  42   2          if(!_AD.ExcuteFlag & !SysBusy){
+  43   3            _AD.StartFlag = 1;
+  44   3          }
+  45   2          else if(_AD.ExcuteFlag){
+  46   3            _AD.EndFlag = 1;
+  47   3          }
+  48   2        }
+  49   1        else if(cmd == 'D')
+  50   1        {
+  51   2          if(!_Ir.ExcuteFlag & !SysBusy){
+  52   3            _Ir.StartFlag = 1;
+  53   3          }
+  54   2          else if(_Ir.ExcuteFlag){
+C51 COMPILER V9.60.0.0   KEYBOARD                                                          10/08/2020 11:30:02 PAGE 2   
+
+  55   3            _Ir.EndFlag = 1;
+  56   3          }
+  57   2        }
+  58   1        else if(cmd == 'E')
+  59   1        {
+  60   2          if(!_Clock.ExcuteFlag & !SysBusy){
+  61   3            _Clock.StartFlag = 1;
+  62   3          }
+  63   2          else if(_Clock.ExcuteFlag){
+  64   3            _Clock.EndFlag = 1;
+  65   3          }
+  66   2        }else{
+  67   2          _nop_();
+  68   2        }
+  69   1      }
+  70          /**************************************************************************
+  71          函数功能：键盘功能函数执行函数
+  72          入口参数：无
+  73          返回值  ：无
+  74          **************************************************************************/
+  75          void KeyDrive()
+  76          {
+  77   1        u8 i, j;
+  78   1        static u8 backup[4][4] = {
+  79   1        {1 , 1 , 1 , 1},{1 , 1 , 1 , 1},
+  80   1        {1 , 1 , 1 , 1},{1 , 1 , 1 , 1}
+  81   1        };//按键状态对照码
+  82   1        
+  83   1        for(i = 0; i < 4; i ++)
+  84   1        {
+  85   2          for(j = 0; j < 4; j ++)
+  86   2          {
+  87   3            if(Key_Sta[i][j] != backup[i][j])
+  88   3            {
+  89   4              if(backup[i][j] != 0) //检测是否已经缓存按下指令
+  90   4              {
+  91   5                KeyAction(Key_CodeMap[i][j]);
+  92   5              }
+  93   4              backup[i][j] = Key_Sta[i][j];
+  94   4            }
+  95   3          }
+  96   2        }
+  97   1      }
+  98          /**************************************************************************
+  99          函数功能：键盘扫描函数
+ 100          入口参数：无
+ 101          返回值  ：无
+ 102          **************************************************************************/
+ 103          void KeyScan()
+ 104          {
+ 105   1        u8 i;
+ 106   1        static u8 Key_OUT = 2;
+ 107   1        static u8 Key_Buff[4][4] = {
+ 108   1          {0xFF, 0xFF, 0xFF, 0xFF},  {0xFF, 0xFF, 0xFF, 0xFF},
+ 109   1          {0xFF, 0xFF, 0xFF, 0xFF},  {0xFF, 0xFF, 0xFF, 0xFF}
+ 110   1        };//缓冲区
+ 111   1      
+ 112   1        Key_Buff[Key_OUT][0] = (Key_Buff[Key_OUT][0] << 1) | Key_IN1; //一则变零则不变
+ 113   1        Key_Buff[Key_OUT][1] = (Key_Buff[Key_OUT][1] << 1) | Key_IN2;
+ 114   1        Key_Buff[Key_OUT][2] = (Key_Buff[Key_OUT][2] << 1) | Key_IN3;
+ 115   1        Key_Buff[Key_OUT][3] = (Key_Buff[Key_OUT][3] << 1) | Key_IN4; 
+ 116   1          
+C51 COMPILER V9.60.0.0   KEYBOARD                                                          10/08/2020 11:30:02 PAGE 3   
+
+ 117   1        for(i = 0; i < 4; i ++)
+ 118   1        {
+ 119   2          if((Key_Buff[Key_OUT][i] & 0x0F) == 0x0F)
+ 120   2          {
+ 121   3            Key_Sta[Key_OUT][i] = 1;
+ 122   3          }
+ 123   2          else if((Key_Buff[Key_OUT][i] & 0x0F) == 0x00)
+ 124   2          {
+ 125   3            Key_Sta[Key_OUT][i] = 0;
+ 126   3          }
+ 127   2        }
+ 128   1        
+ 129   1        Key_OUT ++;
+ 130   1        Key_OUT &= 0x03;
+ 131   1        
+ 132   1        switch(Key_OUT)//逐行扫描
+ 133   1        {
+ 134   2          case 0: Key_OUT1 = 0; Key_OUT4 = 1;Key_OUT3 = 1; Key_OUT2 = 1; break;
+ 135   2          case 1: Key_OUT2 = 0; Key_OUT4 = 1;Key_OUT3 = 1; Key_OUT1 = 1; break;
+ 136   2          case 2: Key_OUT3 = 0; Key_OUT4 = 1;Key_OUT2 = 1; Key_OUT1 = 1; break;
+ 137   2          case 3: Key_OUT4 = 0; Key_OUT3 = 1;Key_OUT2 = 1; Key_OUT1 = 1; break;
+ 138   2          default: break;
+ 139   2        }
+ 140   1      
+ 141   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    516    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =     65    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

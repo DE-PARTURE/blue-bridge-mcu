@@ -1,0 +1,12 @@
+".\Objects\IIC.obj",
+".\Objects\infrared.obj",
+".\Objects\Keyboard.obj",
+".\Objects\SMG.obj",
+".\Objects\OneWire.obj",
+".\Objects\Snoic.obj",
+".\Objects\LED.obj",
+".\Objects\DS1302.obj",
+".\Objects\main.obj",
+".\Objects\Sys.obj" 
+TO ".\Objects\example" 
+PRINT(".\Listings\example.m51") RAMSIZE(256) 

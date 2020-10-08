@@ -1,0 +1,78 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              10/08/2020 11:30:03 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: E:\Keil\Software\C51\BIN\C51.EXE User\main.c COMPACT OPTIMIZE(9,SPEED) BROWSE INCDIR(.\Basic;.\Hard
+                    -ware;.\User) DEBUG OBJECTEXTEND PRINT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * 文件名：example
+   3          * 描  述：实时时钟、温度显示、超声波测距、光敏D/A显示、红外接收数据显示
+   4          * 作  者：JosephCooper
+   5          * 日  期: 2019年4月19日
+   6          * 备  注：CT107单片机综合实训平台 IAP15F2K61S2单片机@11.0592MHZ
+   7          *******************************************************************************
+   8          */
+   9          #include "Sys.h"
+  10          
+  11          //定义任务状态位结构体
+  12          Task _18B20;                
+  13          Task _Dis;                  
+  14          Task _AD;
+  15          Task _Ir;
+  16          Task _Clock;
+  17          Time LocalTime;
+  18          
+  19          void main()
+  20          {
+  21   1        u8 count_AD  = 0;
+  22   1        u8 count_Dis = 0;
+  23   1        
+  24   1        TaskStruInit();             //任务状态位结构体初始化
+  25   1        TimeStruInit();             //本地时间结构体初始化
+  26   1        InitSystem();               //外设初始化
+  27   1        InitTimer0();               //定时器0初始化
+  28   1        InitSonic();                //超声波初始化
+  29   1        PT0 = 1;                    //定时器0中断优先
+  30   1        IR_INPUT = 1;           
+  31   1        InitInfrared();             //红外初始化
+  32   1        //Config_DS18B20();
+  33   1        DS1302Init();               //DS1302初始化
+  34   1        while(1)                    //任务主循环
+  35   1        {
+  36   2          KeyDrive();
+  37   2          KeyScan();
+  38   2          
+  39   2          StartFlagScan();          //任务开始，可包含任务所需初始化内容
+  40   2          ExcuteFlagScan();         //任务执行，循环部分
+  41   2          EndFlagScan();            //任务结束，可关闭任务开始时初始化内容
+  42   2          
+  43   2        }
+  44   1      }
+  45          
+  46          /*
+  47          原中断顺序：
+  48          外部中断0；
+  49          定时中断0
+  50          外部中断1
+  51          定时中断1
+  52          串口中断*/
+
+
+C51 COMPILER V9.60.0.0   MAIN                                                              10/08/2020 11:30:03 PAGE 2   
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     48    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =     22       2
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
